@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 function App() {
   // const [id, setId] = useState()
-  // const [stopState, setStop] = useState();
+  const [stopState, setStop] = useState();
   const [ticketsData, setTickets] = useState([]);
 
   const getSearchId = async () => {
@@ -20,37 +20,33 @@ function App() {
     }
   };
 
-  let ticketsArray = [];
+  // let ticketsArray = [];
 
   const loadTickets = (id) => {
     /**
-     * Сейчас новую пачка билетов сетится каждый раз, когда ты ее получаешь
-     * Потому что в коде
-     * if (!stop) {
-          return loadTickets(id);
-        }
-        не хватало return, то есть условия перехода к следующей итерации.
-        Каждая функция доходила до return setTickets(ticketsArray); и сетила
-        состояние, и если было, скажем, 10 запросов, то состояние сетилось 10 раз.
-        
-        Теперь состояние stopState не нужно
+     * Если не хочется использовать внешнюю переменную ticketsArray -
+     * можно сетить билеты в стейт каждый раз, как их получаешь.
+     * В этом случае, однако, придется хранить и stopState - иначе непонятно, когда
+     * закончили получать билеты. Т.е. мину одна внешняя переменная, плюс одно
+     * состояние
      */
     const dataUrl = `https://front-test.beta.aviasales.ru/tickets?searchId=${id}`;
     axios
       .get(dataUrl)
       .then((response) => {
         const { tickets, stop } = response.data;
-        ticketsArray = [...ticketsArray, ...tickets];
+        // ticketsArray = [...ticketsArray, ...tickets];
+        setTickets((prevState) => [...prevState, ...tickets]); //получили - сетим на основе предыдущего состояния
         if (!stop) {
-          return loadTickets(id); //не хватало return
+          return loadTickets(id);
         }
 
         if (stop) {
-          // setStop(stop);
+          setStop(stop);
           // console.log(ticketsArray);
         }
 
-        return setTickets(ticketsArray);
+        return setTickets((prevState) => [...prevState, ...tickets]);
       })
       .catch(() => {
         loadTickets(id);
@@ -88,9 +84,7 @@ function App() {
       Можно сделать лоадер, например, на время получения билетов, типа
       Boolean(ticketsData.length) ? ticketsData.length : 'Loading...'
       */}
-      <div className="tickets">
-        {Boolean(ticketsData.length) && ticketsData.length}
-      </div>
+      <div className="tickets">{stopState && ticketsData.length}</div>
     </div>
   );
 }
